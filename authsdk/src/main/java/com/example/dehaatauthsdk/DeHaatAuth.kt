@@ -8,6 +8,7 @@ class DeHaatAuth {
     enum class OperationState {
         MOBILE_LOGIN, EMAIL_LOGIN, RENEW_TOKEN, LOGOUT
     }
+
     private lateinit var loginResponseCallback: LoginResponseCallback
     private lateinit var logoutResponseCallback: LogoutCallback
     private lateinit var refreshToken: String
@@ -15,34 +16,34 @@ class DeHaatAuth {
     private var mobileNumber = "9897646336"
     private var otp = "1234"
     private var clientId: String
-    private  var operationState: OperationState
+    private var operationState: OperationState
 
-    private constructor(builder:MobileLoginBuilder){
+    private constructor(builder: MobileLoginBuilder) {
         operationState = OperationState.MOBILE_LOGIN
-        mobileNumber=builder.mobileNumber
+        mobileNumber = builder.mobileNumber
         otp = builder.otp
         clientId = builder.clientId
-        loginResponseCallback= builder.loginResponseCallback
+        loginResponseCallback = builder.loginResponseCallback
     }
 
-    private constructor(builder:EmailLoginBuilder){
+    private constructor(builder: EmailLoginBuilder) {
         operationState = OperationState.EMAIL_LOGIN
         clientId = builder.clientId
-        loginResponseCallback= builder.loginResponseCallback
+        loginResponseCallback = builder.loginResponseCallback
     }
 
-    private constructor(builder:RenewTokenBuilder){
+    private constructor(builder: RenewTokenBuilder) {
         operationState = OperationState.RENEW_TOKEN
         clientId = builder.clientId
         refreshToken = builder.refreshToken
-        loginResponseCallback= builder.loginResponseCallback
+        loginResponseCallback = builder.loginResponseCallback
     }
 
-    private constructor(builder:LogoutBuilder){
+    private constructor(builder: LogoutBuilder) {
         operationState = OperationState.LOGOUT
-        clientId= builder.clientId
+        clientId = builder.clientId
         idToken = builder.idToken
-        logoutResponseCallback= builder.logoutCallback
+        logoutResponseCallback = builder.logoutCallback
     }
 
     fun getMobileNumber() = mobileNumber
@@ -61,9 +62,9 @@ class DeHaatAuth {
 
     fun getClientId() = clientId
 
-    companion object{
+    companion object {
 
-        class  MobileLoginBuilder {
+        class MobileLoginBuilder {
             lateinit var loginResponseCallback: LoginResponseCallback
             var mobileNumber = "9897646336"
             var otp = "1234"
@@ -92,7 +93,7 @@ class DeHaatAuth {
             fun build() = DeHaatAuth(this)
         }
 
-        class  EmailLoginBuilder {
+        class EmailLoginBuilder {
             lateinit var loginResponseCallback: LoginResponseCallback
             lateinit var clientId: String
 
@@ -109,7 +110,7 @@ class DeHaatAuth {
             fun build() = DeHaatAuth(this)
         }
 
-        class  RenewTokenBuilder {
+        class RenewTokenBuilder {
             lateinit var loginResponseCallback: LoginResponseCallback
             lateinit var refreshToken: String
             lateinit var clientId: String
@@ -132,7 +133,7 @@ class DeHaatAuth {
             fun build() = DeHaatAuth(this)
         }
 
-        class  LogoutBuilder {
+        class LogoutBuilder {
             lateinit var logoutCallback: LogoutCallback
             lateinit var idToken: String
             lateinit var clientId: String
