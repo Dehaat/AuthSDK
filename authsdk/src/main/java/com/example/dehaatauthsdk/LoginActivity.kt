@@ -144,11 +144,20 @@ class LoginActivity : Activity() {
                         else
                             handleLoginRedirectUrl(it)
                     } else {
-                        if (checkIfUrlIsAuthorizationUrl(it)) {
-                            inputUserCredentialsAndClickSignIn(
-                                ClientInfo.getAuthSDK().getMobileNumber(),
-                                ClientInfo.getAuthSDK().getOtp()
-                            )
+                        when {
+                            checkIfUrlIsAuthorizationUrl(it) -> {
+                                inputUserCredentialsAndClickSignIn(
+                                    ClientInfo.getAuthSDK().getMobileNumber(),
+                                    ClientInfo.getAuthSDK().getOtp()
+                                )
+                            }
+                            checkIfUrlIsAuthorizationFailUrl(it) -> {
+                                ClientInfo.getAuthSDK().getLoginCallback()
+                                    .onFailure(KotlinNullPointerException("Invalid Credentials"))
+                            }
+                            else -> {
+                                finish()
+                            }
                         }
                     }
                 }
@@ -164,12 +173,15 @@ class LoginActivity : Activity() {
     private fun checkIfUrlIsAuthorizationUrl(url: String) =
         url.contains(mAuthRequest.toUri().toString())
 
+    private fun checkIfUrlIsAuthorizationFailUrl(url: String) =
+        url.contains("/login-actions/authenticate")
+
     private fun inputUserCredentialsAndClickSignIn(userName: String, password: String) =
         webView.loadUrl(
             "javascript: {" +
-                    "document.getElementById('username').value = '" + userName + "';" +
-                    "document.getElementById('password').value = '" + password + "';" +
-                    "document.getElementById('kc-login').click();" +
+                    "document.getElementById('mobile').value = '" + userName + "';" +
+                    "document.getElementById('code').value = '" + password + "';" +
+                    "document.getElementsByClassName('pf-c-button')[0].click();" +
                     "};"
         )
 
