@@ -150,7 +150,7 @@ class LoginActivity : Activity() {
                                 ClientInfo.getAuthSDK().getOtp()
                             )
                         } else{
-                            webView.loadUrl(it)
+                            finish()
                         }
                     }
                 }
