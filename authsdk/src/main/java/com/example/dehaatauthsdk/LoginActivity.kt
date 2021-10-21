@@ -149,6 +149,8 @@ class LoginActivity : Activity() {
                                 ClientInfo.getAuthSDK().getMobileNumber(),
                                 ClientInfo.getAuthSDK().getOtp()
                             )
+                        } else{
+                            webView.loadUrl(it)
                         }
                     }
                 }
