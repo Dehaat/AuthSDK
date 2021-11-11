@@ -3,11 +3,11 @@
   "redirect_uri": "https://appauth.demo-app.io/oauth2redirect",
   "end_session_redirect_uri": "https://appauth.demo-app.io/oauth2redirect",
   "authorization_scope": "openid email",
-  "discovery_uri": "https://oidc.dehat.co/auth/realms/dehaat/.well-known/openid-configuration",
-  "authorization_endpoint": "https://oidc.dehat.co/auth/realms/dehaat/protocol/openid-connect/auth",
-  "token_endpoint": "https://oidc.dehat.co/auth/realms/dehaat/protocol/openid-connect/token",
-  "introspection_endpoint": "https://oidc.dehat.co/auth/realms/dehaat/protocol/openid-connect/token/introspect",
-  "userinfo_endpoint": "https://oidc.dehat.co/auth/realms/dehaat/protocol/openid-connect/userinfo",
-  "end_session_endpoint": "https://oidc.dehat.co/auth/realms/dehaat/protocol/openid-connect/logout",
+  "discovery_uri": "https://feature-oidc.dehat.co/auth/realms/dehaat/.well-known/openid-configuration",
+  "authorization_endpoint": "https://feature-oidc.dehat.co/auth/realms/dehaat/protocol/openid-connect/auth",
+  "token_endpoint": "https://feature-oidc.dehat.co/auth/realms/dehaat/protocol/openid-connect/token",
+  "introspection_endpoint": "https://feature-oidc.dehat.co/auth/realms/dehaat/protocol/openid-connect/token/introspect",
+  "userinfo_endpoint": "https://feature-oidc.dehat.co/auth/realms/dehaat/protocol/openid-connect/userinfo",
+  "end_session_endpoint": "https://feature-oidc.dehat.co/auth/realms/dehaat/protocol/openid-connect/logout",
   "https_required": true
 }

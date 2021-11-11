@@ -2,5 +2,5 @@ package com.example.dehaatauthsdk
 
 interface LogoutCallback {
     fun onLogoutSuccess()
-    fun onLogoutFailure()
+    fun onLogoutFailure(exception: Exception?)
 }

@@ -8,23 +8,32 @@ import android.net.Uri
 import android.os.Bundle
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.Toast
+import com.example.dehaatauthsdk.DeHaatAuth.OperationState.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import net.openid.appauth.*
 import net.openid.appauth.AuthorizationException.AuthorizationRequestErrors
 import net.openid.appauth.AuthorizationService.TokenResponseCallback
 
 class LoginActivity : Activity() {
-
-    private lateinit var initialConfiguration: Configuration
     private lateinit var mAuthService: AuthorizationService
-    private lateinit var mAuthServiceConfiguration: AuthorizationServiceConfiguration
-    private lateinit var mAuthRequest: AuthorizationRequest
-    private lateinit var mLogoutRequest: EndSessionRequest
-    private lateinit var webView: WebView
+
+    private var _initialConfiguration: Configuration? = null
+    private val initialConfiguration get() = _initialConfiguration!!
+
+    private var _mAuthServiceConfiguration: AuthorizationServiceConfiguration? = null
+    private val mAuthServiceConfiguration get() = _mAuthServiceConfiguration!!
+    private var _mAuthRequest: AuthorizationRequest? = null
+    private val mAuthRequest get() = _mAuthRequest!!
+    private var _mLogoutRequest: EndSessionRequest? = null
+    private val mLogoutRequest get() = _mLogoutRequest!!
+
+    private var _webView: WebView? = null
+    private val webView get() = _webView!!
+
+    private lateinit var job: Job
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,12 +41,12 @@ class LoginActivity : Activity() {
     }
 
     private fun initialize() {
-        webView = WebView(this).apply {
+        _webView = WebView(this).apply {
             webViewClient = MyWebViewClient()
             enableWebViewSettings()
         }
-        initialConfiguration = Configuration.getInstance(applicationContext)
-        CoroutineScope((IO)).launch {
+        _initialConfiguration = Configuration.getInstance(applicationContext)
+        job = CoroutineScope((IO)).launch {
             startAuthorizationServiceCreation()
         }
     }
@@ -54,9 +63,10 @@ class LoginActivity : Activity() {
     private fun startAuthorizationServiceCreation() {
         disposeCurrentServiceIfExist()
         mAuthService = createNewAuthorizationService()
-
         initialConfiguration.discoveryUri?.let {
             fetchEndpointsFromDiscoveryUrl(it)
+        }?: kotlin.run {
+            handleErrorAndFinishActivity(Exception("Discovery Url is null"))
         }
     }
 
@@ -85,38 +95,40 @@ class LoginActivity : Activity() {
     private var handleConfigurationRetrievalResult =
         AuthorizationServiceConfiguration.RetrieveConfigurationCallback { config, exception ->
             if (config == null) {
-                Toast.makeText(this, exception.toString(), Toast.LENGTH_SHORT).show()
-                return@RetrieveConfigurationCallback
+                handleErrorAndFinishActivity(exception)
+            } else {
+                _mAuthServiceConfiguration = config
+                createAuthRequest()
             }
-            mAuthServiceConfiguration = config
-            createAuthRequest()
         }
 
     private fun createAuthRequest() {
-        mAuthRequest =
-            AuthorizationRequest.Builder(
-                mAuthServiceConfiguration,
-                initialConfiguration.clientId!!,
-                ResponseTypeValues.CODE,
-                initialConfiguration.redirectUri
-            ).setScope(initialConfiguration.scope).setLoginHint("Please enter email").build()
-
-        chooseOperationAndProcess()
+        initialConfiguration.clientId?.let { clientId ->
+            _mAuthRequest =
+                AuthorizationRequest.Builder(
+                    mAuthServiceConfiguration,
+                    clientId,
+                    ResponseTypeValues.CODE,
+                    initialConfiguration.redirectUri
+                ).setScope(initialConfiguration.scope).setLoginHint("Please enter email").build()
+            chooseOperationAndProcess()
+        } ?: kotlin.run {
+            handleErrorAndFinishActivity(Exception("Client id is null"))
+        }
     }
 
     private fun chooseOperationAndProcess() =
         when (ClientInfo.getAuthSDK().getOperationState()) {
-
-            DeHaatAuth.OperationState.EMAIL_LOGIN ->
+            EMAIL_LOGIN ->
                 startEmailLogin()
 
-            DeHaatAuth.OperationState.MOBILE_LOGIN ->
+            MOBILE_LOGIN ->
                 loadAuthorizationEndpointInWebView(mAuthRequest.toUri().toString())
 
-            DeHaatAuth.OperationState.RENEW_TOKEN ->
+            RENEW_TOKEN ->
                 startRenewAuthToken(ClientInfo.getAuthSDK().getRefreshToken())
 
-            DeHaatAuth.OperationState.LOGOUT ->
+            LOGOUT ->
                 startLogout(ClientInfo.getAuthSDK().getIdToken())
         }
 
@@ -129,7 +141,7 @@ class LoginActivity : Activity() {
     }
 
     private fun loadAuthorizationEndpointInWebView(authUrl: String) {
-        CoroutineScope(Main).launch {
+        runOnUiThread{
             webView.loadUrl(authUrl)
         }
     }
@@ -139,10 +151,11 @@ class LoginActivity : Activity() {
             synchronized(this) {
                 url?.let {
                     if (checkIfUrlIsRedirectUrl(it)) {
-                        if (::mLogoutRequest.isInitialized)
+                        if (_mLogoutRequest != null) {
                             handleLogoutRedirectUrl(it)
-                        else
+                        } else {
                             handleLoginRedirectUrl(it)
+                        }
                     } else {
                         when {
                             checkIfUrlIsAuthorizationUrl(it) -> {
@@ -152,18 +165,24 @@ class LoginActivity : Activity() {
                                 )
                             }
                             checkIfUrlIsAuthorizationFailUrl(it) -> {
-                                ClientInfo.getAuthSDK().getLoginCallback()
-                                    .onFailure(KotlinNullPointerException("Invalid Credentials"))
+                                handleErrorAndFinishActivity(
+                                    Exception("authorization url failure")
+                                )
                             }
                             else -> {
-                                finish()
+                                handleErrorAndFinishActivity(
+                                    Exception("there is some different url")
+                                )
                             }
                         }
                     }
+                }?: kotlin.run {
+                    handleErrorAndFinishActivity(
+                        Exception("url is null")
+                    )
                 }
                 super.onPageStarted(view, url, favicon)
             }
-
         }
     }
 
@@ -185,7 +204,6 @@ class LoginActivity : Activity() {
                     "};"
         )
 
-
     private fun handleLoginRedirectUrl(url: String) {
         val intent = extractResponseDataFromRedirectUrl(url)
         val response = AuthorizationResponse.fromIntent(intent)
@@ -194,9 +212,12 @@ class LoginActivity : Activity() {
                 response.createTokenExchangeRequest(),
                 handleTokenResponseCallback
             )
+        } ?: kotlin.run {
+            handleErrorAndFinishActivity(
+                Exception("Login redirect url failure")
+            )
         }
     }
-
 
     private fun handleLogoutRedirectUrl(url: String) {
         val intent = EndSessionResponse.Builder(mLogoutRequest).setState(
@@ -207,12 +228,10 @@ class LoginActivity : Activity() {
         val response = EndSessionResponse.fromIntent(intent)
 
         response?.let {
-            ClientInfo.getAuthSDK().getLogoutCallback().onLogoutSuccess()
+            handleLogoutSuccess()
         } ?: kotlin.run {
-            ClientInfo.getAuthSDK().getLogoutCallback().onLogoutFailure()
+            handleErrorAndFinishActivity(Exception("logout response is null"))
         }
-
-        finish()
     }
 
     private fun extractResponseDataFromRedirectUrl(url: String): Intent {
@@ -235,17 +254,20 @@ class LoginActivity : Activity() {
 
 
     private fun startRenewAuthToken(refreshToken: String) {
-        val tokenRequest = TokenRequest.Builder(
-            mAuthRequest.configuration,
-            initialConfiguration.clientId!!
-        )
-            .setGrantType(GrantTypeValues.REFRESH_TOKEN)
-            .setScope(null)
-            .setRefreshToken(refreshToken)
-            .setAdditionalParameters(null)
-            .build()
+        initialConfiguration.clientId?.let { clientId ->
+            val tokenRequest = TokenRequest.Builder(
+                mAuthRequest.configuration,
+                clientId
+            ).setGrantType(GrantTypeValues.REFRESH_TOKEN)
+                .setScope(null)
+                .setRefreshToken(refreshToken)
+                .setAdditionalParameters(null)
+                .build()
 
-        performTokenRequest(tokenRequest, handleTokenResponseCallback)
+            performTokenRequest(tokenRequest, handleTokenResponseCallback)
+        } ?: kotlin.run {
+            handleErrorAndFinishActivity(Exception("Client id is null"))
+        }
     }
 
 
@@ -273,26 +295,26 @@ class LoginActivity : Activity() {
                             it.refreshToken!!,
                             it.idToken!!
                         )
-                        ClientInfo.getAuthSDK().getLoginCallback().onSuccess(tokenInfo)
-                    } else
-                        ClientInfo.getAuthSDK().getLoginCallback()
-                            .onFailure(KotlinNullPointerException("access token is null"))
+                        handleTokenSuccess(tokenInfo)
+                    } else {
+                        handleErrorAndFinishActivity(Exception("access token is null"))
+                    }
                 }
             } ?: kotlin.run {
-                ClientInfo.getAuthSDK().getLoginCallback().onFailure(exception)
+                handleErrorAndFinishActivity(exception)
             }
-            finish()
         }
 
 
     private fun startLogout(idToken: String) {
-        mLogoutRequest =
+        _mLogoutRequest =
             EndSessionRequest.Builder(mAuthServiceConfiguration)
                 .setIdTokenHint(idToken)
                 .setPostLogoutRedirectUri(initialConfiguration.endSessionRedirectUri)
                 .build()
-        CoroutineScope(Main).launch {
-            webView = WebView(this@LoginActivity).apply {
+
+        runOnUiThread {
+            _webView = WebView(this@LoginActivity).apply {
                 webViewClient = MyWebViewClient()
                 enableWebViewSettings()
             }
@@ -301,8 +323,14 @@ class LoginActivity : Activity() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         mAuthService.dispose()
+        job.cancel(null)
+        _webView = null
+        _initialConfiguration = null
+        _mLogoutRequest = null
+        _mAuthRequest = null
+        _mAuthServiceConfiguration = null
+        super.onDestroy()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -314,9 +342,34 @@ class LoginActivity : Activity() {
                     response.createTokenExchangeRequest(),
                     handleTokenResponseCallback
                 )
+            } ?: kotlin.run {
+                handleErrorAndFinishActivity(Exception("email login response is null"))
             }
-        } else
-            finish()
+        } else {
+            handleErrorAndFinishActivity(Exception("email login response is null"))
+        }
+    }
+
+    private fun handleTokenSuccess(tokenInfo: TokenInfo){
+        ClientInfo.getAuthSDK().getLoginCallback().onSuccess(tokenInfo)
+        finish()
+    }
+
+    private fun handleLogoutSuccess(){
+        ClientInfo.getAuthSDK().getLogoutCallback().onLogoutSuccess()
+        finish()
+    }
+
+    private fun handleErrorAndFinishActivity(exception: Exception?) {
+        when (ClientInfo.getAuthSDK().getOperationState()) {
+            EMAIL_LOGIN, MOBILE_LOGIN, RENEW_TOKEN -> {
+                ClientInfo.getAuthSDK().getLoginCallback()
+                    .onFailure(exception)
+            }
+            LOGOUT ->
+                ClientInfo.getAuthSDK().getLogoutCallback().onLogoutFailure(exception)
+        }
+        finish()
     }
 
     companion object {
