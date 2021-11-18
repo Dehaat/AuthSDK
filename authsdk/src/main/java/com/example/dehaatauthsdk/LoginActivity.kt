@@ -66,7 +66,7 @@ class LoginActivity : Activity() {
         initialConfiguration.discoveryUri?.let {
             fetchEndpointsFromDiscoveryUrl(it)
         }?: kotlin.run {
-            handleErrorAndFinishActivity(Exception("Discovery Url is null"))
+            handleErrorAndFinishActivity(Exception(Constants.DISCOVERY_URL_NULL))
         }
     }
 
@@ -110,10 +110,10 @@ class LoginActivity : Activity() {
                     clientId,
                     ResponseTypeValues.CODE,
                     initialConfiguration.redirectUri
-                ).setScope(initialConfiguration.scope).setLoginHint("Please enter email").build()
+                ).setScope(initialConfiguration.scope).setLoginHint(Constants.ENTER_EMAIL).build()
             chooseOperationAndProcess()
         } ?: kotlin.run {
-            handleErrorAndFinishActivity(Exception("Client id is null"))
+            handleErrorAndFinishActivity(Exception(Constants.CLIENT_ID_NULL))
         }
     }
 
@@ -166,19 +166,19 @@ class LoginActivity : Activity() {
                             }
                             checkIfUrlIsAuthorizationFailUrl(it) -> {
                                 handleErrorAndFinishActivity(
-                                    Exception("authorization url failure")
+                                    Exception(Constants.AUTHORIZATION_FAIL)
                                 )
                             }
                             else -> {
                                 handleErrorAndFinishActivity(
-                                    Exception("there is some different url")
+                                    Exception(Constants.UNKNOWN_URL + url)
                                 )
                             }
                         }
                     }
                 }?: kotlin.run {
                     handleErrorAndFinishActivity(
-                        Exception("url is null")
+                        Exception(Constants.URL_NULL)
                     )
                 }
                 super.onPageStarted(view, url, favicon)
@@ -193,7 +193,7 @@ class LoginActivity : Activity() {
         url.contains(mAuthRequest.toUri().toString())
 
     private fun checkIfUrlIsAuthorizationFailUrl(url: String) =
-        url.contains("/login-actions/authenticate")
+        url.contains(Constants.AUTHORIZATION_FAIL_URL)
 
     private fun inputUserCredentialsAndClickSignIn(userName: String, password: String) =
         webView.loadUrl(
@@ -214,7 +214,7 @@ class LoginActivity : Activity() {
             )
         } ?: kotlin.run {
             handleErrorAndFinishActivity(
-                Exception("Login redirect url failure")
+                Exception(Constants.REDIRECT_URL_FAIL)
             )
         }
     }
@@ -222,7 +222,7 @@ class LoginActivity : Activity() {
     private fun handleLogoutRedirectUrl(url: String) {
         val intent = EndSessionResponse.Builder(mLogoutRequest).setState(
             Uri.parse(url).getQueryParameter(
-                "state"
+                Constants.STATE
             )
         ).build().toIntent()
         val response = EndSessionResponse.fromIntent(intent)
@@ -230,7 +230,7 @@ class LoginActivity : Activity() {
         response?.let {
             handleLogoutSuccess()
         } ?: kotlin.run {
-            handleErrorAndFinishActivity(Exception("logout response is null"))
+            handleErrorAndFinishActivity(Exception(Constants.LOGOUT_RESPONSE_NULL))
         }
     }
 
@@ -266,7 +266,7 @@ class LoginActivity : Activity() {
 
             performTokenRequest(tokenRequest, handleTokenResponseCallback)
         } ?: kotlin.run {
-            handleErrorAndFinishActivity(Exception("Client id is null"))
+            handleErrorAndFinishActivity(Exception(Constants.CLIENT_ID_NULL))
         }
     }
 
@@ -297,7 +297,7 @@ class LoginActivity : Activity() {
                         )
                         handleTokenSuccess(tokenInfo)
                     } else {
-                        handleErrorAndFinishActivity(Exception("access token is null"))
+                        handleErrorAndFinishActivity(Exception(Constants.TOKEN_RESPONSE_NULL))
                     }
                 }
             } ?: kotlin.run {
