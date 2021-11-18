@@ -177,11 +177,11 @@ class DeHaatAuth {
     fun initialize(context: Context) {
         ClientInfo.setAuthSDK(this)
 
-        val intent = Intent(context, LoginActivity::class.java)
-
-        if (operationState == OperationState.RENEW_TOKEN)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-        context.startActivity(intent)
+        if (operationState == OperationState.RENEW_TOKEN) {
+            RenewTokenHandler(context).startRenewProcess(refreshToken)
+        } else {
+            val intent = Intent(context, LoginActivity::class.java)
+            context.startActivity(intent)
+        }
     }
 }
