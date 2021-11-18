@@ -157,6 +157,21 @@ class DeHaatAuth {
 
             fun build() = DeHaatAuth(this)
         }
+
+        fun isSessionValid(accessTokenString: String?, refreshTokenString: String?, clientId: String): Boolean {
+            val accessToken: AccessToken? = if (TextUtils.isNullCase(accessTokenString))
+                null
+            else
+                TokenVerifier.create(accessTokenString, AccessToken::class.java).token
+
+            val refreshToken: AccessToken? = if (TextUtils.isNullCase(refreshTokenString))
+                null
+            else
+                TokenVerifier.create(refreshTokenString, AccessToken::class.java).token
+
+            return accessToken?.issuedFor.equals(clientId) &&
+                    refreshToken?.isExpired != true
+        }
     }
 
     fun initialize(context: Context) {
@@ -168,20 +183,5 @@ class DeHaatAuth {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         context.startActivity(intent)
-    }
-
-    fun isSessionValid(accessTokenString: String?, refreshTokenString: String?, clientId: String): Boolean {
-        val accessToken: AccessToken? = if (TextUtils.isNullCase(accessTokenString))
-            null
-        else
-            TokenVerifier.create(accessTokenString, AccessToken::class.java).token
-
-        val refreshToken: AccessToken? = if (TextUtils.isNullCase(refreshTokenString))
-            null
-        else
-            TokenVerifier.create(refreshTokenString, AccessToken::class.java).token
-
-        return accessToken?.issuedFor.equals(clientId) &&
-                refreshToken?.isExpired != true
     }
 }
