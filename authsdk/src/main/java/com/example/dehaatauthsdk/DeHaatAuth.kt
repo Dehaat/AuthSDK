@@ -2,6 +2,8 @@ package com.example.dehaatauthsdk
 
 import android.content.Context
 import android.content.Intent
+import org.keycloak.TokenVerifier
+import org.keycloak.representations.AccessToken
 
 class DeHaatAuth {
 
@@ -168,4 +170,18 @@ class DeHaatAuth {
         context.startActivity(intent)
     }
 
+    fun isSessionValid(accessTokenString: String?, refreshTokenString: String?, clientId: String): Boolean {
+        val accessToken: AccessToken? = if (TextUtils.isNullCase(accessTokenString))
+            null
+        else
+            TokenVerifier.create(accessTokenString, AccessToken::class.java).token
+
+        val refreshToken: AccessToken? = if (TextUtils.isNullCase(refreshTokenString))
+            null
+        else
+            TokenVerifier.create(refreshTokenString, AccessToken::class.java).token
+
+        return accessToken?.issuedFor.equals(clientId) &&
+                refreshToken?.isExpired != true
+    }
 }
