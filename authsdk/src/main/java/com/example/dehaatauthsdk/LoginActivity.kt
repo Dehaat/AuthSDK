@@ -3,9 +3,10 @@ package com.example.dehaatauthsdk
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.example.dehaatauthsdk.DeHaatAuth.OperationState.*
@@ -41,22 +42,40 @@ class LoginActivity : Activity() {
     }
 
     private fun initialize() {
-        _webView = WebView(this).apply {
-            webViewClient = MyWebViewClient()
-            enableWebViewSettings()
-        }
+        setUpWebView()
         _initialConfiguration = Configuration.getInstance(applicationContext)
         job = CoroutineScope((IO)).launch {
             startAuthorizationServiceCreation()
         }
     }
 
+    private fun setUpWebView() {
+        _webView = WebView(this).apply {
+            webViewClient = MyWebViewClient()
+            enableWebViewSettings()
+        }
+        _webView?.keepScreenOn = true
+        _webView?.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     private fun WebView.enableWebViewSettings() {
         settings.apply {
+            loadsImagesAutomatically = true
+            useWideViewPort = true
+            allowContentAccess = true
+            allowFileAccess = true
+            databaseEnabled = true
+            domStorageEnabled = true
+            javaScriptEnabled = true
+            loadWithOverviewMode = true
+            useWideViewPort = true
+            layoutAlgorithm = WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING
             javaScriptEnabled = true
             useWideViewPort = true
             loadWithOverviewMode = true
+            pluginState = WebSettings.PluginState.ON
+            setAppCacheEnabled(true)
         }
     }
 
@@ -65,7 +84,7 @@ class LoginActivity : Activity() {
         mAuthService = createNewAuthorizationService()
         initialConfiguration.discoveryUri?.let {
             fetchEndpointsFromDiscoveryUrl(it)
-        }?: kotlin.run {
+        } ?: kotlin.run {
             handleErrorAndFinishActivity(Exception(Constants.DISCOVERY_URL_NULL))
         }
     }
@@ -141,48 +160,46 @@ class LoginActivity : Activity() {
     }
 
     private fun loadAuthorizationEndpointInWebView(authUrl: String) {
-        runOnUiThread{
+        runOnUiThread {
             webView.loadUrl(authUrl)
         }
     }
 
     inner class MyWebViewClient : WebViewClient() {
-        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-            synchronized(this) {
-                url?.let {
-                    if (checkIfUrlIsRedirectUrl(it)) {
-                        if (_mLogoutRequest != null) {
-                            handleLogoutRedirectUrl(it)
-                        } else {
-                            handleLoginRedirectUrl(it)
-                        }
+        override fun onPageFinished(view: WebView?, url: String?) {
+            url?.let {
+                if (checkIfUrlIsRedirectUrl(it)) {
+                    if (_mLogoutRequest != null) {
+                        handleLogoutRedirectUrl(it)
                     } else {
-                        when {
-                            checkIfUrlIsAuthorizationUrl(it) -> {
-                                inputUserCredentialsAndClickSignIn(
-                                    ClientInfo.getAuthSDK().getMobileNumber(),
-                                    ClientInfo.getAuthSDK().getOtp()
-                                )
-                            }
-                            checkIfUrlIsAuthorizationFailUrl(it) -> {
-                                handleErrorAndFinishActivity(
-                                    Exception(Constants.AUTHORIZATION_FAIL)
-                                )
-                            }
-                            else -> {
-                                handleErrorAndFinishActivity(
-                                    Exception(Constants.UNKNOWN_URL + url)
-                                )
-                            }
+                        handleLoginRedirectUrl(it)
+                    }
+                } else {
+                    when {
+                        checkIfUrlIsAuthorizationUrl(it) -> {
+                            inputUserCredentialsAndClickSignIn(
+                                ClientInfo.getAuthSDK().getMobileNumber(),
+                                ClientInfo.getAuthSDK().getOtp()
+                            )
+                        }
+                        checkIfUrlIsAuthorizationFailUrl(it) -> {
+                            handleErrorAndFinishActivity(
+                                Exception(Constants.AUTHORIZATION_FAIL)
+                            )
+                        }
+                        else -> {
+                            handleErrorAndFinishActivity(
+                                Exception(Constants.UNKNOWN_URL + url)
+                            )
                         }
                     }
-                }?: kotlin.run {
-                    handleErrorAndFinishActivity(
-                        Exception(Constants.URL_NULL)
-                    )
                 }
-                super.onPageStarted(view, url, favicon)
+            } ?: kotlin.run {
+                handleErrorAndFinishActivity(
+                    Exception(Constants.URL_NULL)
+                )
             }
+            super.onPageFinished(view, url)
         }
     }
 
@@ -314,10 +331,6 @@ class LoginActivity : Activity() {
                 .build()
 
         runOnUiThread {
-            _webView = WebView(this@LoginActivity).apply {
-                webViewClient = MyWebViewClient()
-                enableWebViewSettings()
-            }
             webView.loadUrl(mLogoutRequest.toUri().toString())
         }
     }
@@ -350,12 +363,12 @@ class LoginActivity : Activity() {
         }
     }
 
-    private fun handleTokenSuccess(tokenInfo: TokenInfo){
+    private fun handleTokenSuccess(tokenInfo: TokenInfo) {
         ClientInfo.getAuthSDK().getLoginCallback().onSuccess(tokenInfo)
         finish()
     }
 
-    private fun handleLogoutSuccess(){
+    private fun handleLogoutSuccess() {
         ClientInfo.getAuthSDK().getLogoutCallback().onLogoutSuccess()
         finish()
     }
