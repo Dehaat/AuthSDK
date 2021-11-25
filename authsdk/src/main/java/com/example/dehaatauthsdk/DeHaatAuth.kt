@@ -158,19 +158,31 @@ class DeHaatAuth {
             fun build() = DeHaatAuth(this)
         }
 
-        fun isSessionValid(accessTokenString: String?, refreshTokenString: String?, clientId: String): Boolean {
+        fun isSessionValid(
+            accessTokenString: String?,
+            refreshTokenString: String?,
+            clientId: String
+        ): Boolean {
+            return isAccessTokenValid(accessTokenString, clientId) &&
+                    isRefreshTokenValid(refreshTokenString)
+        }
+
+        fun isAccessTokenValid(accessTokenString: String?, clientId: String): Boolean {
             val accessToken: AccessToken? = if (TextUtils.isNullCase(accessTokenString))
                 null
             else
                 TokenVerifier.create(accessTokenString, AccessToken::class.java).token
 
+            return accessToken?.issuedFor.equals(clientId)
+        }
+
+        fun isRefreshTokenValid(refreshTokenString: String?): Boolean {
             val refreshToken: AccessToken? = if (TextUtils.isNullCase(refreshTokenString))
                 null
             else
                 TokenVerifier.create(refreshTokenString, AccessToken::class.java).token
 
-            return accessToken?.issuedFor.equals(clientId) &&
-                    refreshToken?.isExpired != true
+            return refreshToken?.isExpired != true
         }
     }
 
