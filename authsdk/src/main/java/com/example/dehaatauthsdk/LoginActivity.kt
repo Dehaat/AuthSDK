@@ -3,8 +3,11 @@ package com.example.dehaatauthsdk
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -35,6 +38,9 @@ class LoginActivity : Activity() {
     private val webView get() = _webView!!
 
     private lateinit var job: Job
+    private var isPageLoaded = false
+    private lateinit var timeoutHandler: Handler
+    private val TIMEOUT = 30L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +49,7 @@ class LoginActivity : Activity() {
 
     private fun initialize() {
         setUpWebView()
+        timeoutHandler = Handler(Looper.getMainLooper())
         _initialConfiguration = Configuration.getInstance(applicationContext)
         job = CoroutineScope((IO)).launch {
             startAuthorizationServiceCreation()
@@ -161,12 +168,18 @@ class LoginActivity : Activity() {
 
     private fun loadAuthorizationEndpointInWebView(authUrl: String) {
         runOnUiThread {
-            webView.loadUrl(authUrl)
+            loadUrl(authUrl)
         }
     }
 
     inner class MyWebViewClient : WebViewClient() {
+        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+            super.onPageStarted(view, url, favicon)
+            isPageLoaded = false
+        }
+
         override fun onPageFinished(view: WebView?, url: String?) {
+            isPageLoaded = true
             url?.let {
                 if (checkIfUrlIsRedirectUrl(it)) {
                     if (_mLogoutRequest != null) {
@@ -213,7 +226,7 @@ class LoginActivity : Activity() {
         url.contains(Constants.AUTHORIZATION_FAIL_URL)
 
     private fun inputUserCredentialsAndClickSignIn(userName: String, password: String) =
-        webView.loadUrl(
+        loadUrl(
             "javascript: {" +
                     "document.getElementById('mobile').value = '" + userName + "';" +
                     "document.getElementById('code').value = '" + password + "';" +
@@ -331,7 +344,7 @@ class LoginActivity : Activity() {
                 .build()
 
         runOnUiThread {
-            webView.loadUrl(mLogoutRequest.toUri().toString())
+            loadUrl(mLogoutRequest.toUri().toString())
         }
     }
 
@@ -363,6 +376,18 @@ class LoginActivity : Activity() {
         }
     }
 
+    private fun loadUrl(url: String) {
+        webView.loadUrl(url)
+        val run = Runnable { // Do nothing if we already have an error
+            // Dismiss any current alerts and progress
+            if (!isPageLoaded) {
+                webView.destroy()
+                handleErrorAndFinishActivity(Exception(Constants.TIME_OUT))
+            }
+        }
+        timeoutHandler.postDelayed(run, TIMEOUT * 1000)
+    }
+
     private fun handleTokenSuccess(tokenInfo: TokenInfo) {
         ClientInfo.getAuthSDK().getLoginCallback().onSuccess(tokenInfo)
         finish()
@@ -373,7 +398,7 @@ class LoginActivity : Activity() {
         finish()
     }
 
-    private fun handleErrorAndFinishActivity(exception: Exception?) {
+    private fun handleErrorAndFinishActivity(exception: Exception? = null) {
         when (ClientInfo.getAuthSDK().getOperationState()) {
             EMAIL_LOGIN, MOBILE_LOGIN, RENEW_TOKEN -> {
                 ClientInfo.getAuthSDK().getLoginCallback()
