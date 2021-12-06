@@ -1,7 +1,7 @@
 {
-  "client_id": "farmerapp",
-  "redirect_uri": "https://appauth.demo-app.io/oauth2redirect",
-  "end_session_redirect_uri": "https://appauth.demo-app.io/oauth2redirect",
+  "client_id": "abc",
+  "redirect_uri": "https://",
+  "end_session_redirect_uri": "https://",
   "authorization_scope": "openid email",
   "discovery_uri": "https://feature-oidc.dehat.co/auth/realms/dehaat/.well-known/openid-configuration",
   "authorization_endpoint": "https://feature-oidc.dehat.co/auth/realms/dehaat/protocol/openid-connect/auth",
