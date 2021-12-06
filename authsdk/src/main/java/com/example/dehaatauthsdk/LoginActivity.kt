@@ -75,11 +75,7 @@ class LoginActivity : Activity() {
             databaseEnabled = true
             domStorageEnabled = true
             javaScriptEnabled = true
-            loadWithOverviewMode = true
-            useWideViewPort = true
             layoutAlgorithm = WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING
-            javaScriptEnabled = true
-            useWideViewPort = true
             loadWithOverviewMode = true
             pluginState = WebSettings.PluginState.ON
             setAppCacheEnabled(true)
@@ -135,13 +131,21 @@ class LoginActivity : Activity() {
                     mAuthServiceConfiguration,
                     clientId,
                     ResponseTypeValues.CODE,
-                    initialConfiguration.redirectUri
-                ).setScope(initialConfiguration.scope).setLoginHint(Constants.ENTER_EMAIL).build()
+                    Uri.parse(getRedirectUri())
+                ).setScope(initialConfiguration.scope).build()
             chooseOperationAndProcess()
         } ?: kotlin.run {
             handleErrorAndFinishActivity(Exception(Constants.CLIENT_ID_NULL))
         }
     }
+
+    private fun getRedirectUri() =
+        when (ClientInfo.getAuthSDK().getClientId()) {
+            Constants.FARMER_CLIENT_ID -> Constants.FARMER_REDIRECT_URI
+            Constants.DBA_CLIENT_ID -> Constants.DBA_REDIRECT_URI
+            Constants.AIMS_CLIENT_ID -> Constants.AIMS_REDIRECT_URI
+            else -> Constants.FARMER_REDIRECT_URI
+        }
 
     private fun chooseOperationAndProcess() =
         when (ClientInfo.getAuthSDK().getOperationState()) {
@@ -217,7 +221,7 @@ class LoginActivity : Activity() {
     }
 
     private fun checkIfUrlIsRedirectUrl(url: String) =
-        url.contains(initialConfiguration.redirectUri.toString())
+        url.contains(getRedirectUri())
 
     private fun checkIfUrlIsAuthorizationUrl(url: String) =
         url.contains(mAuthRequest.toUri().toString())
@@ -340,7 +344,7 @@ class LoginActivity : Activity() {
         _mLogoutRequest =
             EndSessionRequest.Builder(mAuthServiceConfiguration)
                 .setIdTokenHint(idToken)
-                .setPostLogoutRedirectUri(initialConfiguration.endSessionRedirectUri)
+                .setPostLogoutRedirectUri(Uri.parse(getRedirectUri()))
                 .build()
 
         runOnUiThread {
@@ -369,10 +373,10 @@ class LoginActivity : Activity() {
                     handleTokenResponseCallback
                 )
             } ?: kotlin.run {
-                handleErrorAndFinishActivity(Exception("email login response is null"))
+                handleErrorAndFinishActivity(Exception(Constants.EMAIL_LOGIN_RESPONSE_NULL))
             }
         } else {
-            handleErrorAndFinishActivity(Exception("email login response is null"))
+            handleErrorAndFinishActivity()
         }
     }
 
