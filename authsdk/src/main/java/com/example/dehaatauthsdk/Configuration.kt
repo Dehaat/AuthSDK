@@ -85,7 +85,11 @@ class Configuration(private val mContext: Context) {
 
     @Throws(InvalidConfigurationException::class)
     private fun readConfiguration() {
-        val configSource = mResources.openRawResource(R.raw.auth_config).source().buffer()
+        val configSource =
+            if (getAuthSDK().getIsDebugMode())
+                mResources.openRawResource(R.raw.auth_config_debug).source().buffer()
+            else
+                mResources.openRawResource(R.raw.auth_config).source().buffer()
         val configData = Buffer()
         mConfigJson = try {
             configSource.readAll(configData)
