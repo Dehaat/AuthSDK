@@ -315,11 +315,8 @@ class LoginActivity : Activity() {
         val clientAuthentication =
             ClientSecretBasic(initialConfiguration.tokenEndpointUri.toString())
 
-        mAuthService.performTokenRequest(
-            request,
-            clientAuthentication,
-            callback
-        )
+        if (::mAuthService.isInitialized)
+            mAuthService.performTokenRequest(request, clientAuthentication, callback)
     }
 
 

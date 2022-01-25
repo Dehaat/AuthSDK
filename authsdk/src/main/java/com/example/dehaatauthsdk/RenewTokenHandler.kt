@@ -83,11 +83,8 @@ class RenewTokenHandler constructor(
         val clientAuthentication =
             ClientSecretBasic(initialConfiguration.tokenEndpointUri.toString())
 
-        mAuthService.performTokenRequest(
-            request,
-            clientAuthentication,
-            callback
-        )
+        if (::mAuthService.isInitialized)
+            mAuthService.performTokenRequest(request, clientAuthentication, callback)
     }
 
     private var handleTokenResponseCallback =
