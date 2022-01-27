@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import com.auth0.android.jwt.JWT
 import com.example.dehaatauthsdk.ClientInfo.getAuthClientInfo
+import java.util.*
 
 class DeHaatAuth {
 
@@ -193,10 +194,13 @@ class DeHaatAuth {
             isAccessTokenValid(accessToken, clientId) && isRefreshTokenValid(refreshToken)
 
         fun isAccessTokenValid(accessToken: String?, clientId: String) =
-            accessToken != null && JWT(accessToken).claims["azp"]?.asString().equals(clientId)
+            accessToken != null && Date(Calendar.getInstance().timeInMillis).before(JWT(accessToken).expiresAt) &&
+                    JWT(accessToken).claims["azp"]?.asString().equals(clientId)
 
         fun isRefreshTokenValid(refreshToken: String?) =
-            refreshToken != null && !JWT(refreshToken).isExpired(0)
+            refreshToken != null && Date(Calendar.getInstance().timeInMillis).before(
+                JWT(refreshToken).expiresAt
+            )
 
     }
 
