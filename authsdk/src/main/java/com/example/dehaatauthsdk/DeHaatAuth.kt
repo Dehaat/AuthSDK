@@ -21,6 +21,7 @@ class DeHaatAuth {
     private var clientId: String
     private var isDebugMode: Boolean = false
     private var operationState: OperationState
+    private var keycloakDomain:String =""
 
     private constructor(builder: MobileLoginBuilder) {
         operationState = OperationState.MOBILE_LOGIN
@@ -29,6 +30,7 @@ class DeHaatAuth {
         clientId = builder.clientId
         isDebugMode = builder.isDebugMode
         loginResponseCallback = builder.loginResponseCallback
+        keycloakDomain = builder.keycloakDomain
     }
 
     private constructor(builder: EmailLoginBuilder) {
@@ -36,6 +38,7 @@ class DeHaatAuth {
         clientId = builder.clientId
         isDebugMode = builder.isDebugMode
         loginResponseCallback = builder.loginResponseCallback
+        keycloakDomain = builder.keycloakDomain
     }
 
     private constructor(builder: RenewTokenBuilder) {
@@ -44,6 +47,7 @@ class DeHaatAuth {
         isDebugMode = builder.isDebugMode
         refreshToken = builder.refreshToken
         loginResponseCallback = builder.loginResponseCallback
+        keycloakDomain = builder.keycloakDomain
     }
 
     private constructor(builder: LogoutBuilder) {
@@ -52,6 +56,7 @@ class DeHaatAuth {
         isDebugMode = builder.isDebugMode
         idToken = builder.idToken
         logoutResponseCallback = builder.logoutCallback
+        keycloakDomain = builder.keycloakDomain
     }
 
     fun getMobileNumber() = mobileNumber
@@ -72,6 +77,8 @@ class DeHaatAuth {
 
     fun getIsDebugMode() = isDebugMode
 
+    fun getClientKeycloakDomain() = keycloakDomain
+
     companion object {
 
         class MobileLoginBuilder {
@@ -80,6 +87,7 @@ class DeHaatAuth {
             var otp = "1234"
             lateinit var clientId: String
             var isDebugMode: Boolean = false
+            var keycloakDomain: String = ""
 
             fun mobile(number: String): MobileLoginBuilder {
                 this.mobileNumber = number
@@ -96,8 +104,9 @@ class DeHaatAuth {
                 return this
             }
 
-            fun enableDebugMode(): MobileLoginBuilder{
+            fun enableDebugMode(keycloakDomain:String): MobileLoginBuilder{
                 isDebugMode =true
+                this.keycloakDomain = keycloakDomain
                 return this
             }
 
@@ -113,14 +122,16 @@ class DeHaatAuth {
             lateinit var loginResponseCallback: LoginResponseCallback
             lateinit var clientId: String
             var isDebugMode: Boolean = false
+            var keycloakDomain: String = ""
 
             fun clientId(clientId: String): EmailLoginBuilder {
                 this.clientId = clientId
                 return this
             }
 
-            fun enableDebugMode(): EmailLoginBuilder{
+            fun enableDebugMode(keycloakDomain:String): EmailLoginBuilder{
                 isDebugMode =true
+                this.keycloakDomain = keycloakDomain
                 return this
             }
 
@@ -137,6 +148,7 @@ class DeHaatAuth {
             lateinit var refreshToken: String
             lateinit var clientId: String
             var isDebugMode:Boolean = false
+            var keycloakDomain: String = ""
 
             fun refreshToken(refreshToken: String): RenewTokenBuilder {
                 this.refreshToken = refreshToken
@@ -148,8 +160,9 @@ class DeHaatAuth {
                 return this
             }
 
-            fun enableDebugMode(): RenewTokenBuilder{
+            fun enableDebugMode(keycloakDomain:String): RenewTokenBuilder{
                 isDebugMode =true
+                this.keycloakDomain = keycloakDomain
                 return this
             }
 
@@ -166,6 +179,7 @@ class DeHaatAuth {
             lateinit var idToken: String
             lateinit var clientId: String
             var isDebugMode:Boolean = false
+            var keycloakDomain: String = ""
 
             fun idToken(idToken: String): LogoutBuilder {
                 this.idToken = idToken
@@ -177,8 +191,9 @@ class DeHaatAuth {
                 return this
             }
 
-            fun enableDebugMode(): LogoutBuilder{
+            fun enableDebugMode(keycloakDomain:String): LogoutBuilder{
                 isDebugMode =true
+                this.keycloakDomain = keycloakDomain
                 return this
             }
 

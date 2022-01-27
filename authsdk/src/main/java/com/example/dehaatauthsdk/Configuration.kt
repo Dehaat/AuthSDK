@@ -85,11 +85,7 @@ class Configuration(private val mContext: Context, private val _clientId:String,
 
     @Throws(InvalidConfigurationException::class)
     private fun readConfiguration() {
-        val configSource =
-            if (isDebugMode)
-                mResources.openRawResource(R.raw.auth_config_debug).source().buffer()
-            else
-                mResources.openRawResource(R.raw.auth_config).source().buffer()
+        val configSource = mResources.openRawResource(R.raw.auth_config).source().buffer()
         val configData = Buffer()
         mConfigJson = try {
             configSource.readAll(configData)
@@ -132,6 +128,12 @@ class Configuration(private val mContext: Context, private val _clientId:String,
 
     private fun getConfigString(propName: String?): String? {
         var value = mConfigJson!!.optString(propName) ?: return null
+        ClientInfo.getAuthClientInfo()?.let {
+            if(it.getIsDebugMode()){
+                val clientDomain = ClientInfo.getAuthClientInfo()?.getClientKeycloakDomain()
+                clientDomain?.let { value = value.replace("https://oidc.agrevolution.in", it) }
+            }
+        }
         value = value.trim { it <= ' ' }
         return if (TextUtils.isEmpty(value)) {
             null
