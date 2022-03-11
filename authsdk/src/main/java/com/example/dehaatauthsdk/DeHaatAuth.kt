@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.Intent
 import com.auth0.android.jwt.JWT
 import com.example.dehaatauthsdk.ClientInfo.getAuthClientInfo
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.*
+import kotlin.coroutines.resume
 
 class DeHaatAuth {
 
@@ -223,6 +225,19 @@ class DeHaatAuth {
             else
                 null
         }
+
+        suspend fun getNetworkTime(timeZone: String = "Asia/Kolkata") =
+            suspendCancellableCoroutine<Date?> { continuation ->
+                SNTPClient.getDate(TimeZone.getTimeZone(timeZone), object : SNTPClient.Listener {
+                    override fun onTimeResponse(
+                        rawDate: String?,
+                        date: Date?,
+                        ex: java.lang.Exception?
+                    ) {
+                        if (continuation.isActive) continuation.resume(date)
+                    }
+                })
+            }
     }
 
     fun initialize(context: Context) =
@@ -242,4 +257,5 @@ class DeHaatAuth {
                 true
             } ?: false
         } else false
+
 }
