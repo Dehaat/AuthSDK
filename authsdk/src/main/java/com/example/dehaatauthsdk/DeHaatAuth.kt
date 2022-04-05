@@ -17,7 +17,6 @@ class DeHaatAuth {
     private lateinit var loginResponseCallback: LoginResponseCallback
     private lateinit var logoutResponseCallback: LogoutCallback
     private lateinit var refreshToken: String
-    private lateinit var idToken: String
     private var mobileNumber = "9897646336"
     private var otp = "1234"
     private var clientId: String
@@ -56,7 +55,6 @@ class DeHaatAuth {
         operationState = OperationState.LOGOUT
         clientId = builder.clientId
         isDebugMode = builder.isDebugMode
-        idToken = builder.idToken
         logoutResponseCallback = builder.logoutCallback
         keycloakDomain = builder.keycloakDomain
     }
@@ -72,8 +70,6 @@ class DeHaatAuth {
     fun getOperationState() = operationState
 
     fun getRefreshToken() = refreshToken
-
-    fun getIdToken() = idToken
 
     fun getClientId() = clientId
 
@@ -178,15 +174,9 @@ class DeHaatAuth {
 
         class LogoutBuilder {
             lateinit var logoutCallback: LogoutCallback
-            lateinit var idToken: String
             lateinit var clientId: String
             var isDebugMode: Boolean = false
             var keycloakDomain: String = ""
-
-            fun idToken(idToken: String): LogoutBuilder {
-                this.idToken = idToken
-                return this
-            }
 
             fun clientId(clientId: String): LogoutBuilder {
                 this.clientId = clientId

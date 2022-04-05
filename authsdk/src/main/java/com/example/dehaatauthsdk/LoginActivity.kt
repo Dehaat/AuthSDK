@@ -158,7 +158,7 @@ open class LoginActivity : Activity() {
                     triggerAuthUrlInWebView()
                 }
                 LOGOUT -> {
-                    createLogoutRequest(it.getIdToken())
+                    createLogoutRequest()
                     triggerLogoutUrlInWebView()
                 }
                 else -> handleErrorAndFinishActivity(java.lang.Exception(""))
@@ -338,10 +338,9 @@ open class LoginActivity : Activity() {
             }
         }
 
-    private fun createLogoutRequest(idToken: String) {
+    private fun createLogoutRequest() {
         _mLogoutRequest =
             EndSessionRequest.Builder(mAuthServiceConfiguration)
-                .setIdTokenHint(idToken)
                 .setPostLogoutRedirectUri(Uri.parse(getRedirectUri()))
                 .build()
     }
