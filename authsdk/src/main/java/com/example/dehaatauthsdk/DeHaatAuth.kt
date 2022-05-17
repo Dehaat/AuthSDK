@@ -200,8 +200,16 @@ class DeHaatAuth {
         fun isSessionValid(accessToken: String?, refreshToken: String?, clientId: String) =
             isAccessTokenValid(accessToken, clientId) && isRefreshTokenValid(refreshToken)
 
-        fun isAccessTokenValid(accessToken: String?, clientId: String) =
-            accessToken != null && JWT(accessToken).claims["azp"]?.asString().equals(clientId)
+        fun isAccessTokenValid(accessToken: String?, clientId: String): Boolean {
+            return accessToken?.let {
+                val token = JWT(accessToken)
+                val isNotExpired = token.expiresAt?.let { expiresAt ->
+                    Date(Calendar.getInstance().timeInMillis).before(expiresAt)
+                } ?: false
+
+                token.claims["azp"]?.asString().equals(clientId) && isNotExpired
+            } ?: false
+        }
 
         fun isRefreshTokenValid(refreshToken: String?): Boolean {
             return refreshToken?.let {
@@ -217,6 +225,8 @@ class DeHaatAuth {
                 }
             } ?: false
         }
+
+        fun getIssuedAt(token: String) = JWT(token).issuedAt
 
         // function to get auth_id from access token
         fun getAuthId(accessToken: String, clientId: String): String? {
