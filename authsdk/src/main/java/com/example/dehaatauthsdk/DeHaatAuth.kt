@@ -203,10 +203,20 @@ class DeHaatAuth {
         fun isAccessTokenValid(accessToken: String?, clientId: String) =
             accessToken != null && JWT(accessToken).claims["azp"]?.asString().equals(clientId)
 
-        fun isRefreshTokenValid(refreshToken: String?) =
-            refreshToken != null &&
-                    (JWT(refreshToken).claims["typ"]?.asString().equals("Offline") ||
-                            Date(Calendar.getInstance().timeInMillis).before(JWT(refreshToken).expiresAt))
+        fun isRefreshTokenValid(refreshToken: String?): Boolean {
+            return refreshToken?.let {
+                val token = JWT(refreshToken)
+                val currentTime = Calendar.getInstance().timeInMillis
+                if (token.claims["typ"]?.asString().equals("Offline")) {
+                    val thirtyDaysTime = 30L * 24 * 60 * 60 * 1000
+                    token.issuedAt?.after(Date(currentTime.minus(thirtyDaysTime)))
+                } else {
+                    JWT(refreshToken).expiresAt?.let { expiresAt ->
+                        Date(currentTime).before(expiresAt)
+                    } ?: false
+                }
+            } ?: false
+        }
 
         // function to get auth_id from access token
         fun getAuthId(accessToken: String, clientId: String): String? {
