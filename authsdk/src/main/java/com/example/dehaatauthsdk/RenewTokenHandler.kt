@@ -91,11 +91,10 @@ class RenewTokenHandler constructor(
         AuthorizationService.TokenResponseCallback { response, exception ->
             response?.let {
                 with(it) {
-                    if (accessToken != null && refreshToken != null && idToken != null) {
+                    if (accessToken != null && refreshToken != null) {
                         val tokenInfo = TokenInfo(
                             it.accessToken!!,
-                            it.refreshToken!!,
-                            it.idToken!!
+                            it.refreshToken!!
                         )
                         handleTokenSuccess(tokenInfo)
                     } else {

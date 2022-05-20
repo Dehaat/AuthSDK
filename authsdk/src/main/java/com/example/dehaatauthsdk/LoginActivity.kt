@@ -323,11 +323,10 @@ open class LoginActivity : Activity() {
             else {
                 response?.let {
                     with(it) {
-                        if (accessToken != null && refreshToken != null && idToken != null) {
+                        if (accessToken != null && refreshToken != null) {
                             val tokenInfo = TokenInfo(
                                 it.accessToken!!,
                                 it.refreshToken!!,
-                                it.idToken!!
                             )
                             handleTokenSuccess(tokenInfo)
                         } else {
