@@ -248,6 +248,8 @@ class DeHaatAuth {
                     }
                 })
             }
+
+        fun getTokenExpiryTime(token: String) = JWT(token).expiresAt
     }
 
     fun initialize(context: Context) =
