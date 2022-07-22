@@ -19,7 +19,7 @@ class RenewTokenHandler constructor(
     private val mAuthServiceConfiguration get() = _mAuthServiceConfiguration!!
 
     init {
-        _initialConfiguration = Configuration.getInstance(context, _clientId, isDebugMode)
+        _initialConfiguration = Configuration.getInstance(context, _clientId, isDebugMode, false)
     }
 
     fun startRenewProcess() =
