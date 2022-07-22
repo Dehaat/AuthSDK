@@ -210,9 +210,10 @@ class Configuration(private val mContext: Context, private val _clientId:String,
         private const val PREFS_NAME = "config"
         private const val KEY_LAST_HASH = "lastHash"
         private var sInstance = WeakReference<Configuration?>(null)
-        fun getInstance(context: Context, _clientId:String, isDebugMode:Boolean): Configuration {
+        fun getInstance(context: Context, _clientId:String, isDebugMode:Boolean,
+                        isLogin: Boolean): Configuration {
             var config = sInstance.get()
-            if (config == null) {
+            if (config == null || (isLogin && isDebugMode)) {
                 config = Configuration(context,_clientId,isDebugMode)
                 sInstance = WeakReference(config)
             }
