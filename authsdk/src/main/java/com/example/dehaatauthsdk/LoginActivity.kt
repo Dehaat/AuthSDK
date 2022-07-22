@@ -50,19 +50,20 @@ open class LoginActivity : Activity() {
             timeoutHandler = Handler(Looper.getMainLooper())
             _initialConfiguration = Configuration.getInstance(
                 applicationContext,
-                it.getClientId(), it.getIsDebugMode()
+                it.getClientId(), it.getIsDebugMode(), (it.getOperationState() == EMAIL_LOGIN ||
+                        it.getOperationState() == MOBILE_LOGIN)
             )
             initialConfiguration.discoveryUri?.let { uri ->
                 fetchEndpointsFromDiscoveryUrl(uri)
             } ?: handleErrorAndFinishActivity(Exception(Constants.DISCOVERY_URL_NULL))
         } ?: finish()
 
-    private fun initializeWebView(){
-        _webView= getWebViewWithInitialSetup()
+    private fun initializeWebView() {
+        _webView = getWebViewWithInitialSetup()
     }
 
 
-    open fun getWebViewWithInitialSetup()  =
+    open fun getWebViewWithInitialSetup() =
         WebView(this).apply {
             webViewClient = MyWebViewClient()
             enableWebViewSettings()
@@ -85,7 +86,7 @@ open class LoginActivity : Activity() {
         }
     }
 
-    private  fun fetchEndpointsFromDiscoveryUrl(discoveryUrl: Uri) {
+    private fun fetchEndpointsFromDiscoveryUrl(discoveryUrl: Uri) {
         AuthorizationServiceConfiguration.fetchFromUrl(
             discoveryUrl,
             handleConfigurationRetrievalResult,
@@ -153,7 +154,7 @@ open class LoginActivity : Activity() {
     private fun chooseOperationAndProcess() =
         getAuthClientInfo()?.let {
             when (it.getOperationState()) {
-                EMAIL_LOGIN,MOBILE_LOGIN -> {
+                EMAIL_LOGIN, MOBILE_LOGIN -> {
                     createAuthRequest()
                     triggerAuthUrlInWebView()
                 }
@@ -185,9 +186,9 @@ open class LoginActivity : Activity() {
         }
     }
 
-    open fun onPageStartedInWebView(){}
+    open fun onPageStartedInWebView() {}
 
-    open fun onPageFinishedInWebView(url:String?){
+    open fun onPageFinishedInWebView(url: String?) {
         url?.let {
             if (checkIfUrlIsRedirectUrl(it))
                 handleRedirection(it)
@@ -204,14 +205,14 @@ open class LoginActivity : Activity() {
     }
 
 
-    private fun handleWrongUrl(url:String){
+    private fun handleWrongUrl(url: String) {
         when {
             checkIfUrlIsForgotPassword(url) || checkIfUrlIsAuthorizationFailUrl(url) -> {
                 getAuthClientInfo()?.let {
-                    if(it.getOperationState() != EMAIL_LOGIN) handleAuthUrlFailure()
-                }?:handleErrorAndFinishActivity(Exception(Constants.UNKNOWN_URL + url))
+                    if (it.getOperationState() != EMAIL_LOGIN) handleAuthUrlFailure()
+                } ?: handleErrorAndFinishActivity(Exception(Constants.UNKNOWN_URL + url))
             }
-            else->
+            else ->
                 handleErrorAndFinishActivity(Exception(Constants.UNKNOWN_URL + url))
         }
     }
@@ -318,7 +319,7 @@ open class LoginActivity : Activity() {
 
     private var handleTokenResponseCallback =
         TokenResponseCallback { response, exception ->
-            if(isFinishing)
+            if (isFinishing)
                 handleErrorAndFinishActivity(java.lang.Exception(""))
             else {
                 response?.let {
@@ -343,6 +344,7 @@ open class LoginActivity : Activity() {
                 .setPostLogoutRedirectUri(Uri.parse(getRedirectUri()))
                 .build()
     }
+
     private fun loadUrlInWebView(url: String) {
         webView.loadUrl(url)
         timeoutHandler.postDelayed(getTimeoutRunnable(), 30L * 1000)
@@ -395,7 +397,7 @@ open class LoginActivity : Activity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        Log.d("ACTIVITY STATE","onNewIntent was called")
+        Log.d("ACTIVITY STATE", "onNewIntent was called")
     }
 
 }
