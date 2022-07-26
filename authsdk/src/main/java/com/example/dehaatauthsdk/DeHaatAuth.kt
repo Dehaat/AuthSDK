@@ -254,21 +254,26 @@ class DeHaatAuth {
     }
 
     fun initialize(context: Context) =
-        if (getAuthClientInfo() == null) {
-            ClientInfo.setAuthClientInfo(this)
-            getAuthClientInfo()?.let {
-                when (operationState) {
-                    OperationState.RENEW_TOKEN ->
-                        RenewTokenHandler(context, it.clientId, it.isDebugMode).startRenewProcess()
+        synchronized(context) {
+            if (getAuthClientInfo() == null) {
+                ClientInfo.setAuthClientInfo(this)
+                getAuthClientInfo()?.let {
+                    when (operationState) {
+                        OperationState.RENEW_TOKEN ->
+                            RenewTokenHandler(
+                                context,
+                                it.clientId,
+                                it.isDebugMode
+                            ).startRenewProcess()
 
-                    OperationState.EMAIL_LOGIN ->
-                        context.startActivity(Intent(context, WebViewLoginActivity::class.java))
+                        OperationState.EMAIL_LOGIN ->
+                            context.startActivity(Intent(context, WebViewLoginActivity::class.java))
 
-                    else ->
-                        context.startActivity(Intent(context, LoginActivity::class.java))
-                }
-                true
-            } ?: false
-        } else false
-
+                        else ->
+                            context.startActivity(Intent(context, LoginActivity::class.java))
+                    }
+                    true
+                } ?: false
+            } else false
+        }
 }
