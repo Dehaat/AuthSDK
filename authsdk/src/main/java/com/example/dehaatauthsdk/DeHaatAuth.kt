@@ -1,5 +1,6 @@
 package com.example.dehaatauthsdk
 
+import android.app.Application
 import android.content.Context
 import android.content.Intent
 import com.auth0.android.jwt.JWT
@@ -253,8 +254,8 @@ class DeHaatAuth {
             if (token.isNotEmpty()) JWT(token).expiresAt else null
     }
 
-    fun initialize(context: Context) =
-        synchronized(context) {
+    fun initialize(context: Context, applicationInstance: Application) =
+        synchronized(applicationInstance) {
             if (getAuthClientInfo() == null) {
                 ClientInfo.setAuthClientInfo(this)
                 getAuthClientInfo()?.let {
