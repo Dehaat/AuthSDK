@@ -16,7 +16,8 @@
             android:launchMode="singleTask"
             android:theme="@style/Theme.Design.NoActionBar" />
 
-        <activity android:name="net.openid.appauth.RedirectUriReceiverActivity">
+        <activity android:name="net.openid.appauth.RedirectUriReceiverActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
