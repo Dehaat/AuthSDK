@@ -7,6 +7,7 @@ import java.lang.Exception
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
+import java.security.SecureRandom
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -105,7 +106,7 @@ internal constructor(
         buffer[offset++] = (fraction shr 16).toByte()
         buffer[offset++] = (fraction shr 8).toByte()
         // low order bits should be random data
-        buffer[offset++] = (Math.random() * 255.0).toInt().toByte()
+        buffer[offset++] = (SecureRandom().nextInt() * 255.0).toInt().toByte()
     }
 
     companion object {
