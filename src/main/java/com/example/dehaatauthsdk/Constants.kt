@@ -9,6 +9,7 @@ object Constants {
     const val AUTHORIZATION_FAIL_URL = "/login-actions/authenticate"
     const val RESET_CREDENTIALS = "/login-actions/reset-credentials"
     const val REDIRECT_URL_FAIL = "Redirect url failure"
+    const val UPDATE_PASSWORD = "UPDATE_PASSWORD"
     const val STATE = "state"
     const val LOGOUT_RESPONSE_NULL = "Logout response is null"
     const val TOKEN_RESPONSE_NULL = "TokenResponse is null"
