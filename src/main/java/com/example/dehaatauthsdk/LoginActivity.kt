@@ -10,14 +10,29 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
+import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.example.dehaatauthsdk.ClientInfo.getAuthClientInfo
-import com.example.dehaatauthsdk.DeHaatAuth.OperationState.*
-import net.openid.appauth.*
+import com.example.dehaatauthsdk.DeHaatAuth.OperationState.EMAIL_LOGIN
+import com.example.dehaatauthsdk.DeHaatAuth.OperationState.LOGOUT
+import com.example.dehaatauthsdk.DeHaatAuth.OperationState.MOBILE_LOGIN
+import com.example.dehaatauthsdk.DeHaatAuth.OperationState.RENEW_TOKEN
+import net.openid.appauth.AppAuthConfiguration
+import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationException.AuthorizationRequestErrors
+import net.openid.appauth.AuthorizationRequest
+import net.openid.appauth.AuthorizationResponse
+import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthorizationService.TokenResponseCallback
+import net.openid.appauth.AuthorizationServiceConfiguration
+import net.openid.appauth.ClientSecretBasic
+import net.openid.appauth.EndSessionRequest
+import net.openid.appauth.EndSessionResponse
+import net.openid.appauth.ResponseTypeValues
+import net.openid.appauth.TokenRequest
+
 
 open class LoginActivity : Activity() {
 
@@ -37,6 +52,7 @@ open class LoginActivity : Activity() {
     private val webView get() = _webView!!
 
     private var isPageLoaded = false
+    private var isUpdatePasswordLoaded = false
     private lateinit var timeoutHandler: Handler
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -158,10 +174,12 @@ open class LoginActivity : Activity() {
                     createAuthRequest()
                     triggerAuthUrlInWebView()
                 }
+
                 LOGOUT -> {
                     createLogoutRequest()
                     triggerLogoutUrlInWebView()
                 }
+
                 else -> handleErrorAndFinishActivity(java.lang.Exception(""))
             }
         } ?: finish()
@@ -198,6 +216,13 @@ open class LoginActivity : Activity() {
 
                     checkIfUrlIsLogoutUrl(it) -> loadUrlInWebView(it)
 
+                    checkIfUrlIsPasswordExpire(it) -> {
+                        if (!isUpdatePasswordLoaded) {
+                            isUpdatePasswordLoaded = true
+                            loadUrlInWebView(it)
+                        }
+                    }
+
                     else -> handleWrongUrl(it)
                 }
             }
@@ -212,6 +237,7 @@ open class LoginActivity : Activity() {
                     if (it.getOperationState() != EMAIL_LOGIN) handleAuthUrlFailure()
                 } ?: handleErrorAndFinishActivity(Exception(Constants.UNKNOWN_URL + url))
             }
+
             else ->
                 handleErrorAndFinishActivity(Exception(Constants.UNKNOWN_URL + url))
         }
@@ -233,9 +259,11 @@ open class LoginActivity : Activity() {
             _mLogoutRequest != null -> {
                 handleLogoutRedirectUrl(url)
             }
+
             _mAuthRequest != null -> {
                 handleLoginRedirectUrl(url)
             }
+
             else -> handleErrorAndFinishActivity(java.lang.Exception(""))
         }
 
@@ -253,6 +281,9 @@ open class LoginActivity : Activity() {
 
     private fun checkIfUrlIsLogoutUrl(url: String) =
         _mLogoutRequest != null && url.contains(mLogoutRequest.toUri().toString())
+
+    private fun checkIfUrlIsPasswordExpire(url: String) =
+        url.contains(Constants.UPDATE_PASSWORD, true)
 
     private fun inputUserCredentialsAndClickSignIn(userName: String, password: String) =
         loadUrlInWebView(
@@ -376,6 +407,7 @@ open class LoginActivity : Activity() {
                     it.getLoginCallback()
                         .onFailure(exception)
                 }
+
                 LOGOUT ->
                     it.getLogoutCallback().onLogoutFailure(exception)
             }
