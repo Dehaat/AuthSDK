@@ -14,7 +14,7 @@
         <activity
             android:name=".WebViewLoginActivity"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.Design.NoActionBar" />
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
 
         <activity android:name="net.openid.appauth.RedirectUriReceiverActivity"
             android:exported="true">
